@@ -64,6 +64,68 @@ examples.
   `--target '[{"keyword":"p0420"}]'`.
 - Mention that results are from live DataForSEO data when reporting API output.
 
+## Tool Selection
+
+Use this map to choose the first command, then run `d4s help <command>` before
+calling it if the params are not already obvious.
+
+- Keyword demand: use `volume` for Google Ads volume, `keyword-overview` for
+  volume plus organic difficulty, intent, and CPC, `difficulty` for bulk organic
+  difficulty, `search-intent` for intent classification, and `top-searches` or
+  `trends`/`google-trends` for broader demand research.
+- Keyword expansion: use `ideas` for adjacent terms, `related` for SERP-related
+  terms, `suggestions` for phrase variants containing the seed, and
+  `keywords-for-site` for keywords relevant to a known domain.
+- SERP and ranking analysis: use `serp` for live Google results,
+  `serp-youtube` for YouTube SERPs, `ranked-keywords` for a domain's ranking
+  keywords, `serp-competitors` for competitors on a keyword set, and
+  `historical-ranks` or the full `dataforseo_labs_google_historical_serps`
+  command when historical context is needed.
+- Competitor and market analysis: use `competitors` for domains competing with
+  a target, `domain-intersection` or `page-intersection` for overlap analysis,
+  `rank-overview` for domain-level ranking metrics, and `traffic-estimation`
+  for bulk traffic estimates.
+- Backlink analysis: use `backlinks` for summary metrics, `referring-domains`
+  for source domains, `backlinks-list` for individual backlinks,
+  `backlinks-anchors` for anchor text, `backlinks-competitors` for link
+  competitors, and `bulk-*` backlinks commands for comparing many targets.
+- Technical and on-page SEO: use `lighthouse` for performance/accessibility SEO
+  audits, `onpage-instant` for page-level on-page checks, and `onpage-content`
+  for parsed page content.
+- AI visibility: use `ai-volume` for AI keyword demand, `llm-mentions` for
+  pages mentioned by LLM answers, `llm-mentions-domains` for cited domains,
+  `llm-mentions-pages` for cited pages, `llm-mentions-metrics` for aggregate
+  metrics, `llm-mentions-cross` for comparing targets, `chatgpt-scraper` for a
+  live ChatGPT-style answer, and `llm-response`/`llm-models` when the user asks
+  for model-specific LLM response checks.
+- Entity and commerce research: use `whois` and `technologies` for domain
+  intelligence, `business-search` for local/business listings, `content-search`
+  for content analysis, and `amazon`, `amazon-search`, or `amazon-sellers` for
+  Amazon merchant data.
+
+## Workflow Recipes
+
+- Keyword opportunity check: run `keyword-overview` for the seed terms, then
+  `difficulty` if many keywords need organic difficulty, then `serp` with low
+  `--depth` for the strongest candidate terms. Summarize volume, organic
+  difficulty, intent, CPC, and visible SERP competitors separately.
+- Niche or content cluster expansion: start with `ideas`, `related`, and
+  `suggestions` using low `--limit` values. Use `keyword-overview` on the
+  shortlist, then group by intent and difficulty in the final answer.
+- Competitor domain audit: run `ranked-keywords`, `competitors`, and
+  `keywords-for-site` for the target. Add `backlinks` and `referring-domains`
+  only when backlink data is requested or clearly useful.
+- Backlink gap analysis: compare `backlinks` summaries first. If more detail is
+  needed, use `referring-domains`, `backlinks-list`, `backlinks-anchors`, and
+  `backlinks-domain-intersection` with narrow limits.
+- AI visibility gap check: run `llm-mentions` for the keyword or target domain,
+  then `llm-mentions-domains` and `llm-mentions-pages` to identify cited
+  competitors. Use `llm-mentions-cross` when comparing multiple brands or
+  domains.
+- Page-level SEO audit: run `lighthouse` for technical signals and
+  `onpage-instant` or `onpage-content` when the user asks for page content,
+  HTML, headings, or extractable on-page signals.
+
 ## Common Commands
 
 ```bash
