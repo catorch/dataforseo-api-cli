@@ -1,0 +1,8 @@
+node_modules/
+*.log
+.DS_Store
+# keep dist/ committed for zero-build installs, but allow local rebuild
+# (dist/main.js IS shipped — do NOT ignore it)
+
+# stray extractor debug output
+extract.err
