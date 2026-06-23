@@ -116,11 +116,17 @@ Run `d4s list` to see every tool, its alias, endpoint, and required params.
 
 ## How it works
 
-`extract.mjs` introspects the installed `dataforseo-mcp-server` package (imports each tool class, calls `getName()` / `getDescription()` / `getParams()`, and captures the real `/v3/...` endpoint via a mock client). The result is `registry.json` — a faithful map of all 84 tools. The CLI is a thin generic executor: validate params → build task → POST/GET → format. No per-tool code; adding a new endpoint upstream just needs `npm run extract`.
+`registry.json` is committed and used at runtime, so normal CLI users do not need
+the MCP server installed. `extract.mjs` is a maintainer script that regenerates
+that registry from the exact `dataforseo-mcp-server` dev dependency. It imports
+each tool class, calls `getName()` / `getDescription()` / `getParams()`, and
+captures the real `/v3/...` endpoint via a mock client. The CLI is a thin
+generic executor: validate params → build task → POST/GET → format.
 
 ## Development
 
 ```bash
+npm install            # installs the pinned extractor dependency
 bun run build          # bundle src/*.ts → dist/main.js (single file, zero deps)
 npm run extract        # regenerate registry.json from the installed MCP server
 ./dist/main.js list    # smoke test

@@ -7,7 +7,7 @@
   "author": "",
   "repository": {
     "type": "git",
-    "url": ""
+    "url": "git+https://github.com/catorch/dataforseo-cli.git"
   },
   "keywords": [
     "dataforseo",
@@ -41,6 +41,11 @@
     "node": ">=18"
   },
   "pi": {
-    "skills": ["skills/dataforseo"]
+    "skills": [
+      "skills/dataforseo"
+    ]
+  },
+  "devDependencies": {
+    "dataforseo-mcp-server": "2.9.9"
   }
 }

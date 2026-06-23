@@ -23,11 +23,13 @@ function findPkg() {
 const PKG = findPkg();
 if (!PKG) {
   console.error('dataforseo-mcp-server not found. Install it first:');
-  console.error('  npm install --save-dev dataforseo-mcp-server   (or)   npx -y dataforseo-mcp-server --help');
+  console.error('  npm install');
   console.error('  (or) set D4S_MCP_PKG=/path/to/dataforseo-mcp-server');
   process.exit(1);
 }
 const MODROOT = path.join(PKG, 'build/main/core/modules');
+const sourcePkg = JSON.parse(await readFile(path.join(PKG, 'package.json'), 'utf8'));
+const sourceVersion = `dataforseo-mcp-server@${sourcePkg.version}`;
 
 // Discover tool files by content ("getName()" + "makeRequest("), not by name
 // pattern, so we catch modules like ai-optimization whose tools aren't *.tool.js.
@@ -102,4 +104,4 @@ for (const f of files) {
     payloadPassthrough: capture ? (capture.tasks && Object.keys(capture.tasks[0]||{}).length>=0) : false,
   });
 }
-console.log(JSON.stringify({count:registry.length, generatedAt:new Date().toISOString(), sourceVersion:'dataforseo-mcp-server@2.9.9', tools:registry}, null, 2));
+console.log(JSON.stringify({count:registry.length, generatedAt:new Date().toISOString(), sourceVersion, tools:registry}, null, 2));
