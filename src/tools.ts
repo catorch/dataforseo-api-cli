@@ -92,6 +92,7 @@ export const ALIASES: Readonly<Record<string, string>> = {
   "backlinks-summary": "backlinks_summary",
   "backlinks-list": "backlinks_backlinks",
   "backlinks-anchors": "backlinks_anchors",
+  "referring-domains": "backlinks_referring_domains",
   "backlinks-referring-domains": "backlinks_referring_domains",
   "backlinks-domain-pages": "backlinks_domain_pages",
   "backlinks-domain-pages-summary": "backlinks_domain_pages_summary",

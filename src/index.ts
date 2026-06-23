@@ -260,13 +260,13 @@ POPULAR COMMANDS (see 'd4s list' for all 84)
   difficulty --keywords a,b          Bulk organic keyword difficulty
   related --keyword "p0420"          Related keywords
   ideas --keywords "obd2 codes"      Keyword ideas
-  serp --keyword "p0420 code"        Live Google SERP
+  serp --keyword "p0420 code" --lang en   Live Google SERP
   ranked-keywords --target X.com     Keywords a domain ranks for
   competitors --target X.com         Domain competitors
   backlinks --target X.com           Backlinks summary
   referring-domains --target X.com   Referring domains
   lighthouse --url https://X.com     On-page Lighthouse audit
-  llm-mentions --keyword "p0420"     Visibility in AI/LLM answers (2026)
+  llm-mentions --target '[{"keyword":"p0420"}]'   Visibility in AI/LLM answers
 
 Every tool also accepts its snake_case or kebab-case name and all documented
 DataForSEO params as --flags (arrays via comma or repeated flags).`);

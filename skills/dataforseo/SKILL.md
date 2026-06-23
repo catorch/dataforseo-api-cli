@@ -1,84 +1,133 @@
 ---
 name: dataforseo
-description: Full DataForSEO SEO/AI-visibility API via the `d4s` CLI — 84 endpoints covering keyword search volume, keyword difficulty, keyword ideas/related/suggestions, live Google + YouTube SERP, backlinks & referring domains, on-page Lighthouse audits, domain competitors, and 2026 LLM/AI mention tracking (how often a domain/keyword appears in ChatGPT & AI answers). Use for ANY keyword research, SEO sizing, niche validation, competitor analysis, SERP difficulty checks, backlink audits, or tracking visibility in AI search. Triggers: search volume, keyword volume, keyword difficulty, keyword research, keyword ideas, related keywords, SERP, rankings, competitor research, backlinks, referring domains, lighthouse, on-page, AI visibility, LLM mentions, DataForSEO.
-license: MIT
+description: Use the installed DataForSEO API CLI (`d4s`, npm package dataforseo-api-cli) for live DataForSEO SEO and AI visibility data including keyword volume, keyword difficulty, keyword ideas, related keywords, SERP checks, rankings, domain competitors, backlinks, referring domains, Lighthouse audits, on-page audits, DataForSEO Labs, AI Optimization, ChatGPT scraper, LLM mentions, top cited domains, and top cited pages. Triggers include search volume, keyword research, SERP, SEO API, competitor analysis, backlink audit, AI visibility, LLM visibility, LLM mentions, ChatGPT visibility, and DataForSEO.
 ---
 
-# DataForSEO (`d4s` CLI)
+# DataForSEO API CLI (`d4s`)
 
-A single zero-dependency `d4s` CLI wraps the **entire DataForSEO REST API** (84 endpoints) — direct HTTP, no MCP server required. Covers keywords, SERP, backlinks, on-page, competitors, and the **2026 LLM/AI-mentions module** (track how often domains/keywords appear in ChatGPT / AI answers).
+Use `d4s` when a task needs live DataForSEO data. The CLI makes direct HTTPS
+requests to DataForSEO, uses the caller's DataForSEO account, and does not need
+the MCP server at runtime.
 
-## Setup (one-time)
+The bundled package currently ships a committed registry with 84 endpoints
+generated from `dataforseo-mcp-server@2.9.9`. If endpoint coverage is important
+for the answer, confirm with `d4s list` or `registry.json` instead of relying on
+memory.
 
-1. Install the CLI: `npm install -g dataforseo-api-cli` (or clone + `npm install -g .`).
-2. Add credentials to `~/.config/dataforseo/env` (chmod 600):
+## Install and Check
+
+```bash
+npm install -g dataforseo-api-cli
+d4s --version
+d4s list
+```
+
+Local repo install is also valid:
+
+```bash
+npm install -g .
+```
+
+Requires Node.js 18 or newer.
+
+## Credentials
+
+`d4s` resolves DataForSEO credentials in this order:
+
+1. `--username login@you --password SECRET`
+2. `DATAFORSEO_USERNAME` and `DATAFORSEO_PASSWORD`
+3. Env file, defaulting to `~/.config/dataforseo/env`
+
+Default env file format:
 
 ```sh
 export DATAFORSEO_USERNAME='login@you'
 export DATAFORSEO_PASSWORD='your-api-password'
 ```
 
-(Credentials can also come from `DATAFORSEO_USERNAME` / `DATAFORSEO_PASSWORD` env vars or `--username` / `--password` flags.)
+The default env file is optional. If `--env-file PATH` or
+`DATAFORSEO_ENV_FILE` is set, that file must exist and contain valid
+`export KEY='value'` lines. Do not print credentials in responses, logs, or
+examples.
 
-## Usage
+## Operating Rules
 
-```bash
-d4s <command> [--params-as-flags] [--tsv | --json | --raw]
-d4s list [module]            # list all 84 tools / tools in a module
-d4s help <command>           # show params for a command
-```
+- Before using an unfamiliar endpoint, run `d4s help <command>` and use the
+  required params shown there.
+- Live calls may be billable. Run them only when the user asked for live
+  DataForSEO data or the task clearly requires it.
+- Keep queries narrow: use small keyword lists, `--limit`, `--depth`, filters,
+  and exact targets when the endpoint supports them.
+- Use aliases from `d4s list`, or the full snake_case tool name.
+- Do not invent flags. CLI flags are kebab-case versions of registry params.
+- Use JSON for structured arrays/objects, for example
+  `--target '[{"keyword":"p0420"}]'`.
+- Mention that results are from live DataForSEO data when reporting API output.
 
-Every command also accepts the full snake_case tool name from `d4s list`.
-
-### Common commands
+## Common Commands
 
 ```bash
 # Keyword research
-d4s volume --keywords "p0420,p0171,p0300" --tsv                 # Google Ads search volume
-d4s keyword-overview --keywords "p0420 code" --tsv               # volume + difficulty + intent + CPC
-d4s difficulty --keywords "p0420,p0171" --tsv                    # bulk organic difficulty
-d4s ideas --keywords "obd2 codes" --tsv                          # keyword ideas
-d4s related --keyword "p0420" --tsv                              # related keywords
-d4s suggestions --keyword "check engine light" --tsv             # suggestions
+d4s volume --keywords "p0420,p0171,p0300" --language-code en --tsv
+d4s keyword-overview --keywords "p0420 code" --tsv
+d4s difficulty --keywords "p0420,p0171" --tsv
+d4s ideas --keywords "obd2 codes" --limit 10 --tsv
+d4s related --keyword "p0420" --limit 10 --tsv
+d4s suggestions --keyword "check engine light" --limit 10 --tsv
 
 # SERP
-d4s serp --keyword "p0420 code" --lang en --tsv                  # live Google SERP (+ AI Overview)
+d4s serp --keyword "p0420 code" --lang en --depth 10 --tsv
 d4s serp-youtube --keyword "p0420" --location-name "United States" --language-code en --tsv
 
-# Competitors & site analysis
-d4s ranked-keywords --target "obd-codes.com" --tsv               # keywords a domain ranks for
-d4s competitors --target "obd-codes.com"                         # domain competitors
-d4s keywords-for-site --target "obd-codes.com" --tsv             # keyword gaps
+# Competitors and site analysis
+d4s ranked-keywords --target "obd-codes.com" --tsv
+d4s competitors --target "obd-codes.com"
+d4s keywords-for-site --target "obd-codes.com" --limit 10 --tsv
 
-# Backlinks (requires DataForSEO backlinks subscription)
+# Backlinks, requiring DataForSEO Backlinks subscription
 d4s backlinks --target "obd-codes.com"
-d4s referring-domains --target "obd-codes.com" --tsv
+d4s referring-domains --target "obd-codes.com" --limit 10 --tsv
 
 # On-page technical SEO
-d4s lighthouse --url "https://obd-codes.com/p0420"               # Google Lighthouse audit
+d4s lighthouse --url "https://www.obd-codes.com/p0420"
 
-# 2026 — AI/LLM visibility (requires DataForSEO AI Optimization subscription)
-d4s llm-mentions-search --target '[{"keyword":"p0420"}]' --limit 10   # mentions in AI answers
-d4s llm-mentions-domains --keyword "p0420"                           # top domains cited by LLMs
+# AI Optimization / LLM visibility, requiring DataForSEO AI Optimization subscription
+d4s ai-volume --keywords "p0420,p0171" --language-code en --tsv
+d4s llm-mentions --target '[{"keyword":"p0420"}]' --limit 10
+d4s llm-mentions-domains --target '[{"keyword":"p0420"}]' --items-list-limit 10
+d4s llm-mentions-pages --target '[{"domain":"obd-codes.com"}]' --items-list-limit 10
+d4s chatgpt-scraper --keyword "best scanner for p0420" --language-code en
 ```
 
-### Passing parameters
+## Parameter Patterns
 
-- Scalars: `--keyword "p0420 code"` `--depth 100`
-- Arrays of strings: `--keywords a,b,c` (comma-split) or repeatable `--keywords a --keywords b`
-- Arrays of objects (e.g. LLM-mentions targets): pass JSON — `--target '[{"keyword":"p0420"}]'`
-- Booleans: `--include-subdomains` (true) or `--no-include-subdomains` (false)
-- Global shortcuts: `--location "United States"` and `--lang en` map to the tool's location/language fields
-- Defaults from DataForSEO are applied automatically; required params are validated
+- Scalars: `--keyword "p0420 code"` or `--depth 10`
+- String arrays: `--keywords a,b,c` or repeated flags like
+  `--keywords a --keywords b`
+- Object arrays: `--target '[{"keyword":"p0420"}]'`
+- Boolean true: `--include-subdomains`
+- Boolean false: `--no-include-subdomains`
+- Shortcuts: `--location "United States"` maps to `--location-name`;
+  `--lang en` maps to `--language-code`
 
-### Output
+Required params are validated before the request. Defaults from the bundled
+registry are applied automatically.
 
-- Default: pretty JSON of `tasks[0].result`
-- `--tsv`: tab-separated view (curated columns for list-shaped tools; generic for others) — pipe into `column -t` or spreadsheets
-- `--raw`: full raw API response envelope
+## Output
 
-## Notes
+- Default output is pretty JSON for `tasks[0].result`.
+- `--tsv` returns tab-separated output for spreadsheet and shell pipelines.
+- `--raw` returns the full DataForSEO response envelope.
+- `D4S_DEBUG=1` prints request method, path, and body to stderr. Use it only for
+  troubleshooting; it does not print auth headers, but request bodies can still
+  contain sensitive query data.
 
-- `d4s list` shows every command, alias, endpoint, and required params. Start there.
-- Some modules (backlinks, AI Optimization) need their subscriptions activated in your DataForSEO account — the CLI surfaces those `40204` errors clearly.
-- `competition` / `cpc` fields are **advertiser** metrics; for organic difficulty use `keyword-overview` (keyword_difficulty) or `difficulty`.
+## Errors and Caveats
+
+- Backlinks and AI Optimization endpoints require the matching DataForSEO
+  subscriptions. DataForSEO `40204` errors usually mean the subscription or API
+  feature is not active.
+- `competition` and `cpc` are advertiser metrics. For organic SEO difficulty,
+  use `keyword-overview` (`keyword_difficulty`) or `difficulty`.
+- Output schemas follow live DataForSEO responses and may change. Use `--raw`
+  or `--json` when a curated TSV column is missing.
