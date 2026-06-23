@@ -3,7 +3,7 @@
 [![npm version](https://img.shields.io/npm/v/dataforseo-api-cli.svg)](https://www.npmjs.com/package/dataforseo-api-cli)
 [![Node.js](https://img.shields.io/node/v/dataforseo-api-cli.svg)](https://www.npmjs.com/package/dataforseo-api-cli)
 [![license](https://img.shields.io/npm/l/dataforseo-api-cli.svg)](LICENSE)
-[![release](https://img.shields.io/badge/release-v0.1.0-blue)](https://github.com/catorch/dataforseo-api-cli/releases/tag/v0.1.0)
+[![release](https://img.shields.io/badge/release-v0.1.1-blue)](https://github.com/catorch/dataforseo-api-cli/releases/tag/v0.1.1)
 [![package size](https://packagephobia.com/badge?p=dataforseo-api-cli)](https://packagephobia.com/result?p=dataforseo-api-cli)
 ![runtime dependencies](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
 ![DataForSEO endpoints](https://img.shields.io/badge/DataForSEO%20endpoints-84-blue)

@@ -21,7 +21,7 @@ import {
 } from "./client.ts";
 import { toTSV } from "./format.ts";
 
-const VERSION = "0.1.0";
+const VERSION = "__D4S_VERSION__";
 const BANNER = `d4s ${VERSION} — DataForSEO CLI (84 endpoints, direct REST)`;
 
 // --- argv parsing ----------------------------------------------------------

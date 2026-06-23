@@ -1,6 +1,6 @@
 {
   "name": "dataforseo-api-cli",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "Zero-dependency CLI for the DataForSEO API: keywords, SERP, backlinks, on-page audits, DataForSEO Labs, and AI/LLM visibility endpoints.",
   "type": "module",
   "license": "MIT",
