@@ -1,22 +1,27 @@
 {
-  "name": "dataforseo-cli",
+  "name": "dataforseo-api-cli",
   "version": "0.1.0",
-  "description": "Zero-dependency CLI for the full DataForSEO API (84 endpoints: keywords, SERP, backlinks, on-page, LLM/AI mentions, more). Direct REST calls — no MCP server required. Works as a standalone CLI and as a pi/Codex agent skill.",
+  "description": "Zero-dependency CLI for the DataForSEO API: keywords, SERP, backlinks, on-page audits, DataForSEO Labs, and AI/LLM visibility endpoints.",
   "type": "module",
   "license": "MIT",
   "author": "",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/catorch/dataforseo-cli.git"
+    "url": "git+https://github.com/catorch/dataforseo-api-cli.git"
   },
   "keywords": [
     "dataforseo",
+    "dataforseo-api",
     "seo",
+    "seo-api",
     "keyword-research",
+    "keyword-volume",
     "serp",
+    "google-serp",
     "backlinks",
     "llm",
     "ai-optimization",
+    "rest-api",
     "cli",
     "pi-package",
     "agent-skill"

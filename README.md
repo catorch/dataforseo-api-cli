@@ -1,6 +1,6 @@
-# d4s — DataForSEO CLI
+# DataForSEO API CLI (`d4s`)
 
-A single, zero-dependency CLI for the **full DataForSEO REST API** — **84 endpoints** covering keyword research, SERP, backlinks, on-page audits, competitors, and the **2026 LLM/AI-mentions module** (track how often domains/keywords appear in ChatGPT & AI answers).
+A single, zero-dependency CLI for the **DataForSEO API** — **84 endpoints** covering keyword research, SERP, backlinks, on-page audits, competitors, and the **2026 LLM/AI-mentions module** (track how often domains/keywords appear in ChatGPT & AI answers).
 
 Direct HTTPS calls — **no MCP server required.** Works as a standalone CLI and as a [pi](https://github.com/badlogic/pi-coding-agent) / Codex agent skill.
 
@@ -20,14 +20,14 @@ The official DataForSEO MCP server is great inside MCP-aware agents (Claude Code
 ### Option A — npm (recommended)
 
 ```bash
-npm install -g dataforseo-cli
+npm install -g dataforseo-api-cli
 ```
 
 ### Option B — git clone (zero-build — `dist/` is committed)
 
 ```bash
-git clone https://github.com/YOU/dataforseo-cli.git
-cd dataforseo-cli
+git clone https://github.com/catorch/dataforseo-api-cli.git
+cd dataforseo-api-cli
 npm install -g .          # links the `d4s` binary
 ```
 

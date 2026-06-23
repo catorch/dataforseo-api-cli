@@ -10,7 +10,7 @@ A single zero-dependency `d4s` CLI wraps the **entire DataForSEO REST API** (84 
 
 ## Setup (one-time)
 
-1. Install the CLI: `npm install -g dataforseo-cli` (or clone + `npm install -g .`).
+1. Install the CLI: `npm install -g dataforseo-api-cli` (or clone + `npm install -g .`).
 2. Add credentials to `~/.config/dataforseo/env` (chmod 600):
 
 ```sh
