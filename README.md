@@ -39,7 +39,7 @@ Requires **Node ≥ 18** (uses native `fetch`).
 
 ## Credentials
 
-Any of:
+The CLI resolves credentials in this order:
 
 1. **Flags:** `--username login@you --password SECRET`
 2. **Env vars:** `DATAFORSEO_USERNAME` / `DATAFORSEO_PASSWORD`
@@ -48,7 +48,10 @@ Any of:
    export DATAFORSEO_USERNAME='login@you'
    export DATAFORSEO_PASSWORD='your-api-password'
    ```
-   Override the path with `--env-file PATH` or `DATAFORSEO_ENV_FILE`.
+
+The default env file is optional. If you explicitly set `--env-file PATH` or
+`DATAFORSEO_ENV_FILE`, that file must exist and contain valid `export KEY='value'`
+lines.
 
 Get credentials at [app.dataforseo.com](https://app.dataforseo.com). Some modules (Backlinks, AI Optimization) require their subscriptions to be activated.
 

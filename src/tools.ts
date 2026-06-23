@@ -2,16 +2,26 @@
 // official dataforseo-mcp-server tool definitions (see extract.mjs).
 import registry from "../registry.json" with { type: "json" };
 
+type CoreType = "array" | "boolean" | "enum" | "number" | "object" | "string";
+
+interface PathTemplate {
+  template: string;
+  vars: readonly string[];
+}
+
+/** Registry metadata for one CLI/API parameter. */
 export interface Param {
   name: string;
-  coreType: string; // string | boolean | number | array | enum | ...
-  elementType?: string; // for arrays
-  enumValues?: string[];
+  coreType: CoreType;
+  elementType?: string;
+  enumValues?: readonly string[];
   defaultValue?: unknown;
   nullable?: boolean;
   optional: boolean;
   description: string;
 }
+
+/** CLI-facing metadata for one generated DataForSEO endpoint. */
 export interface Tool {
   name: string; // MCP snake_case name
   title: string;
@@ -19,22 +29,27 @@ export interface Tool {
   module: string;
   endpoint: string | null;
   method: string;
-  pathTemplate?: { template: string; vars: string[] } | null;
-  params: Param[];
+  pathTemplate?: PathTemplate | null;
+  params: readonly Param[];
 }
+
+/** Parsed shape of the generated registry.json file. */
 export interface Registry {
   count: number;
   generatedAt: string;
   sourceVersion: string;
-  tools: Tool[];
+  tools: readonly Tool[];
 }
 
-export const TOOLS: Tool[] = (registry as Registry).tools;
+const REGISTRY = parseRegistry(registry);
+/** All validated DataForSEO tools loaded from registry.json. */
+export const TOOLS: readonly Tool[] = REGISTRY.tools;
 
 // --- friendly command aliases ---------------------------------------------
 // Short ergonomic names for the highest-traffic tools. Any tool can also be
 // called by its full snake_case name or kebab-case equivalent.
-export const ALIASES: Record<string, string> = {
+/** Human-friendly command aliases mapped to generated tool names. */
+export const ALIASES: Readonly<Record<string, string>> = {
   // keywords
   volume: "kw_data_google_ads_search_volume",
   "search-volume": "kw_data_google_ads_search_volume",
@@ -137,14 +152,16 @@ export function resolveTool(cmd: string): Tool | undefined {
   return undefined;
 }
 
+/** Returns the available DataForSEO module names in display order. */
 export function modules(): string[] {
   return [...new Set(TOOLS.map((t) => t.module))].sort();
 }
 
+/** Returns tools for one module, or every tool when no module is provided. */
 export function listTools(moduleFilter?: string): Tool[] {
   return moduleFilter
     ? TOOLS.filter((t) => t.module === moduleFilter)
-    : TOOLS;
+    : [...TOOLS];
 }
 
 // --- path resolution -------------------------------------------------------
@@ -163,24 +180,30 @@ export function resolvePath(
   const patch = ENDPOINT_PATCH[tool.name];
   // string-concat templated tool not caught by extractor
   if (tool.name === "merchant_amazon_locations") {
-    const c = args.country ? `/${encodeURIComponent(String(args.country))}` : "";
+    const country =
+      args.country === undefined ? undefined : coerce(getParam(tool, "country"), args.country);
+    const c = country === undefined ? "" : `/${encodeURIComponent(String(country))}`;
     return { path: `/v3/merchant/amazon/locations${c}`, method: "GET" };
   }
   if (tool.pathTemplate) {
     let path = tool.pathTemplate.template;
     for (const v of tool.pathTemplate.vars) {
-      const p = tool.params.find((p) => p.name === v);
-      let val = args[v] ?? p?.defaultValue;
+      const p = getParam(tool, v);
+      const val = args[v] ?? p.defaultValue;
       if (val === undefined || val === null) {
         throw new Error(
           `Templated path requires --${v.replace(/_/g, "-")} for "${tool.name}"`,
         );
       }
-      path = path.replace(`{${v}}`, encodeURIComponent(String(val)));
+      path = path.replace(`{${v}}`, encodeURIComponent(String(coerce(p, val))));
     }
     return { path, method: patch?.method ?? tool.method };
   }
-  return { path: patch?.path ?? tool.endpoint!, method: patch?.method ?? tool.method };
+  const endpoint = patch?.path ?? tool.endpoint;
+  if (endpoint === null) {
+    throw new Error(`Tool "${tool.name}" has no endpoint or path template`);
+  }
+  return { path: endpoint, method: patch?.method ?? tool.method };
 }
 
 // --- payload building ------------------------------------------------------
@@ -205,24 +228,211 @@ export function buildPayload(
 }
 
 function coerce(p: Param, v: unknown): unknown {
+  if (v === null) {
+    if (p.nullable === true) {
+      return null;
+    }
+    throw new Error(`--${p.name.replace(/_/g, "-")} does not accept null`);
+  }
+
   switch (p.coreType) {
+    case "string":
+      if (typeof v !== "string") {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be a string`);
+      }
+      return v;
     case "number": {
-      const n = Number(v);
-      return Number.isFinite(n) ? n : v;
+      if (typeof v === "number") {
+        if (!Number.isFinite(v)) {
+          throw new Error(`--${p.name.replace(/_/g, "-")} must be a finite number`);
+        }
+        return v;
+      }
+      if (typeof v !== "string" || v.trim() === "") {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be a finite number`);
+      }
+      const parsed = Number(v);
+      if (!Number.isFinite(parsed)) {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be a finite number`);
+      }
+      return parsed;
     }
     case "boolean": {
       if (typeof v === "boolean") return v;
-      if (typeof v === "string") return /^(1|true|yes|on)$/i.test(v);
-      return Boolean(v);
+      if (typeof v !== "string") {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be a boolean`);
+      }
+      if (/^(1|true|yes|on)$/i.test(v)) return true;
+      if (/^(0|false|no|off)$/i.test(v)) return false;
+      throw new Error(`--${p.name.replace(/_/g, "-")} must be a boolean`);
     }
     case "array":
-      return Array.isArray(v) ? v : v === undefined ? [] : [v];
-    default:
+      if (!Array.isArray(v)) {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be an array`);
+      }
       return v;
+    case "object":
+      if (!isRecord(v)) {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be a JSON object`);
+      }
+      return v;
+    case "enum":
+      if (typeof v !== "string") {
+        throw new Error(`--${p.name.replace(/_/g, "-")} must be a string enum value`);
+      }
+      if (p.enumValues !== undefined && p.enumValues.length > 0 && !p.enumValues.includes(v)) {
+        throw new Error(
+          `--${p.name.replace(/_/g, "-")} must be one of: ${p.enumValues.join(", ")}`,
+        );
+      }
+      return v;
+    default:
+      throw new Error(`Unsupported param type for --${p.name.replace(/_/g, "-")}: ${p.coreType}`);
   }
 }
 
 /** Names of params that are required (no default, not optional). */
 export function requiredParams(tool: Tool): Param[] {
   return tool.params.filter((p) => !p.optional && p.defaultValue === undefined);
+}
+
+function getParam(tool: Tool, name: string): Param {
+  const param = tool.params.find((p) => p.name === name);
+  if (param === undefined) {
+    throw new Error(`Registry error: "${tool.name}" is missing param "${name}"`);
+  }
+  return param;
+}
+
+function parseRegistry(value: unknown): Registry {
+  const record = requireRecord(value, "registry");
+  const tools = requireArray(record.tools, "registry.tools").map(parseTool);
+  const count = requireNumber(record.count, "registry.count");
+  if (count !== tools.length) {
+    throw new Error(`Registry count mismatch: count=${count}, tools=${tools.length}`);
+  }
+  return {
+    count,
+    generatedAt: requireString(record.generatedAt, "registry.generatedAt"),
+    sourceVersion: requireString(record.sourceVersion, "registry.sourceVersion"),
+    tools,
+  };
+}
+
+function parseTool(value: unknown, index: number): Tool {
+  const context = `registry.tools[${index}]`;
+  const record = requireRecord(value, context);
+  return {
+    name: requireString(record.name, `${context}.name`),
+    title: requireString(record.title, `${context}.title`),
+    description: requireString(record.description, `${context}.description`),
+    module: requireString(record.module, `${context}.module`),
+    endpoint: parseNullableString(record.endpoint, `${context}.endpoint`),
+    method: requireString(record.method, `${context}.method`),
+    pathTemplate: parsePathTemplate(record.pathTemplate, `${context}.pathTemplate`),
+    params: requireArray(record.params, `${context}.params`).map((param, paramIndex) =>
+      parseParam(param, `${context}.params[${paramIndex}]`),
+    ),
+  };
+}
+
+function parseParam(value: unknown, context: string): Param {
+  const record = requireRecord(value, context);
+  const param: Param = {
+    name: requireString(record.name, `${context}.name`),
+    coreType: parseCoreType(record.coreType, `${context}.coreType`),
+    optional: requireBoolean(record.optional, `${context}.optional`),
+    description: requireString(record.description, `${context}.description`),
+  };
+
+  if (record.elementType !== undefined) {
+    param.elementType = requireString(record.elementType, `${context}.elementType`);
+  }
+  if (record.enumValues !== undefined) {
+    param.enumValues = requireStringArray(record.enumValues, `${context}.enumValues`);
+  }
+  if (record.defaultValue !== undefined) {
+    param.defaultValue = record.defaultValue;
+  }
+  if (record.nullable !== undefined) {
+    param.nullable = requireBoolean(record.nullable, `${context}.nullable`);
+  }
+  return param;
+}
+
+function parsePathTemplate(value: unknown, context: string): PathTemplate | null | undefined {
+  if (value === undefined || value === null) {
+    return value;
+  }
+  const record = requireRecord(value, context);
+  return {
+    template: requireString(record.template, `${context}.template`),
+    vars: requireStringArray(record.vars, `${context}.vars`),
+  };
+}
+
+function parseCoreType(value: unknown, context: string): CoreType {
+  const coreType = requireString(value, context);
+  switch (coreType) {
+    case "array":
+    case "boolean":
+    case "enum":
+    case "number":
+    case "object":
+    case "string":
+      return coreType;
+    default:
+      throw new Error(`${context} has unsupported param type: ${coreType}`);
+  }
+}
+
+function parseNullableString(value: unknown, context: string): string | null {
+  if (value === null) {
+    return null;
+  }
+  return requireString(value, context);
+}
+
+function requireString(value: unknown, context: string): string {
+  if (typeof value !== "string") {
+    throw new Error(`${context} must be a string`);
+  }
+  return value;
+}
+
+function requireNumber(value: unknown, context: string): number {
+  if (typeof value !== "number" || !Number.isFinite(value)) {
+    throw new Error(`${context} must be a finite number`);
+  }
+  return value;
+}
+
+function requireBoolean(value: unknown, context: string): boolean {
+  if (typeof value !== "boolean") {
+    throw new Error(`${context} must be a boolean`);
+  }
+  return value;
+}
+
+function requireArray(value: unknown, context: string): unknown[] {
+  if (!Array.isArray(value)) {
+    throw new Error(`${context} must be an array`);
+  }
+  return value;
+}
+
+function requireStringArray(value: unknown, context: string): string[] {
+  const items = requireArray(value, context);
+  return items.map((item, index) => requireString(item, `${context}[${index}]`));
+}
+
+function requireRecord(value: unknown, context: string): Record<string, unknown> {
+  if (!isRecord(value)) {
+    throw new Error(`${context} must be an object`);
+  }
+  return value;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
 }

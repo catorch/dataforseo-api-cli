@@ -1,12 +1,14 @@
 // Output formatting. Default is pretty JSON; --tsv renders tabular views.
 
+type Row = Record<string, unknown>;
+
 // Curated TSV columns for the highest-value list-shaped tools.
 // Each entry = [headerRow, accessorRow]; accessorRow uses dotted paths. The
 // resolver picks the first accessor set whose values exist on row[0].
 interface Curated {
   headers: string[];
   paths: string[];
-  rowFilter?: (row: any) => boolean; // drop rows that don't match
+  rowFilter?: (row: Row) => boolean; // drop rows that don't match
 }
 const CURATED: Record<string, Curated[]> = {
   kw_data_google_ads_search_volume: [
@@ -62,17 +64,29 @@ const CURATED: Record<string, Curated[]> = {
   ],
 };
 
-function getByPath(obj: any, path: string): unknown {
-  return path.split(".").reduce((o: any, k) => (o == null ? undefined : o[k]), obj);
+function getByPath(obj: unknown, path: string): unknown {
+  let current = obj;
+  for (const key of path.split(".")) {
+    if (!isRecord(current)) {
+      return undefined;
+    }
+    current = current[key];
+  }
+  return current;
 }
 
 // Collect arrays of plain objects, tracking the parent key. Returns tuples of
 // [rows, wasUnderItems] so callers can prefer DataForSEO's `.items` convention.
 const ITEM_KEYS = new Set(["items", "results", "organic_items", "paid_items"]);
-function collectArrays(node: any, parentKey: string | null, depth: number, out: { rows: any[][]; underItems: boolean }[]): void {
+function collectArrays(
+  node: unknown,
+  parentKey: string | null,
+  depth: number,
+  out: Array<{ rows: Row[]; underItems: boolean }>,
+): void {
   if (node == null || depth > 8) return;
   if (Array.isArray(node)) {
-    const objs = node.filter((x) => x && typeof x === "object" && !Array.isArray(x));
+    const objs = node.filter(isRecord);
     if (objs.length) out.push({ rows: objs, underItems: ITEM_KEYS.has(parentKey || "") });
     for (const x of node) collectArrays(x, parentKey, depth + 1, out);
     return;
@@ -83,7 +97,7 @@ function collectArrays(node: any, parentKey: string | null, depth: number, out: 
 
 // Score a candidate row array: prefer arrays whose elements have many primitive
 // fields (i.e. the actual leaf records, not wrapper objects).
-function scoreRows(rows: any[]): number {
+function scoreRows(rows: readonly Row[]): number {
   let prim = 0;
   for (const v of Object.values(rows[0] || {})) {
     if (v != null && typeof v !== "object") prim++;
@@ -93,8 +107,8 @@ function scoreRows(rows: any[]): number {
 
 /** Find the best array of plain-object records. Prefers arrays nested under
  *  DataForSEO's `.items` key (flattened), else the richest array found. */
-function findRows(node: any): any[] | null {
-  const candidates: { rows: any[][]; underItems: boolean }[] = [];
+function findRows(node: unknown): Row[] | null {
+  const candidates: Array<{ rows: Row[]; underItems: boolean }> = [];
   collectArrays(node, null, 0, candidates);
   if (!candidates.length) return null;
 
@@ -115,9 +129,10 @@ function findRows(node: any): any[] | null {
   return best;
 }
 
-export function toTSV(result: any, toolName: string): string {
+/** Formats a DataForSEO result into TSV, using curated columns when available. */
+export function toTSV(result: unknown, toolName: string): string {
   const curated = CURATED[toolName];
-  let rows: any[] | null = findRows(result);
+  let rows: Row[] | null = findRows(result);
   let headers: string[] | null = null;
   let paths: string[] | null = null;
 
@@ -147,7 +162,7 @@ export function toTSV(result: any, toolName: string): string {
       }
       if (lines.length > 1) return lines.join("\n");
     }
-    return JSON.stringify(result, null, 2);
+    return stringifyFallback(result);
   }
 
   if (!headers) {
@@ -160,11 +175,24 @@ export function toTSV(result: any, toolName: string): string {
     paths = headers;
   }
 
+  if (headers === null || paths === null) {
+    throw new Error("TSV formatter failed to resolve column paths");
+  }
+
   const esc = (v: unknown) => {
     const s = v == null ? "" : typeof v === "object" ? JSON.stringify(v) : String(v);
     return s.includes("\t") || s.includes("\n") ? JSON.stringify(s) : s;
   };
-  const out = [headers!.join("\t")];
-  for (const r of rows) out.push(paths!.map((p) => esc(getByPath(r, p))).join("\t"));
+  const out = [headers.join("\t")];
+  for (const r of rows) out.push(paths.map((p) => esc(getByPath(r, p))).join("\t"));
   return out.join("\n");
+}
+
+function isRecord(value: unknown): value is Row {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function stringifyFallback(value: unknown): string {
+  const rendered = JSON.stringify(value, null, 2);
+  return rendered === undefined ? String(value) : rendered;
 }
