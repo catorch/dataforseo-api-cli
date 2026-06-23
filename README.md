@@ -1,5 +1,14 @@
 # DataForSEO API CLI (`d4s`)
 
+[![npm version](https://img.shields.io/npm/v/dataforseo-api-cli.svg)](https://www.npmjs.com/package/dataforseo-api-cli)
+[![npm downloads](https://img.shields.io/npm/dm/dataforseo-api-cli.svg)](https://www.npmjs.com/package/dataforseo-api-cli)
+[![Node.js](https://img.shields.io/node/v/dataforseo-api-cli.svg)](https://www.npmjs.com/package/dataforseo-api-cli)
+[![license](https://img.shields.io/npm/l/dataforseo-api-cli.svg)](LICENSE)
+[![GitHub release](https://img.shields.io/github/v/release/catorch/dataforseo-api-cli?sort=semver)](https://github.com/catorch/dataforseo-api-cli/releases)
+[![package size](https://packagephobia.com/badge?p=dataforseo-api-cli)](https://packagephobia.com/result?p=dataforseo-api-cli)
+![runtime dependencies](https://img.shields.io/badge/runtime%20dependencies-0-brightgreen)
+![DataForSEO endpoints](https://img.shields.io/badge/DataForSEO%20endpoints-84-blue)
+
 A single, zero-dependency CLI for the **DataForSEO API** — **84 endpoints** covering keyword research, SERP, backlinks, on-page audits, competitors, and the **2026 LLM/AI-mentions module** (track how often domains/keywords appear in ChatGPT & AI answers).
 
 Direct HTTPS calls — **no MCP server required.** Works as a standalone CLI and as a [pi](https://github.com/badlogic/pi-coding-agent) / Codex agent skill.
